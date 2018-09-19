@@ -1,0 +1,14 @@
+1，WriteToPort中对m_bufferList操作需要加锁：
+
+@ xwb1966
+xwb1966 
+评论道 23天前
+EnterCriticalSection(&m_csCommunicationSync);      //<----
+m_bufferList.push_back(m_bufferStruct);
+LeaveCriticalSection(&m_csCommunicationSync);     //<----
+否则会导致链表被破坏，这个很容易可以模拟出来
+.2，WriteChar（）中，将无内容需要发送时，需要对发送信息进行重置，而不是一走了之：
+if（port-> m_bufferList.size （）== 0）{ 
+ResetEvent（port-> m_hWriteEvent）; 
+} 
+原代码会导致一个无限死循环（并不是每次都会，具体原因不明）。现象是WaitCommEvent返回无效参数，且无法清除。
